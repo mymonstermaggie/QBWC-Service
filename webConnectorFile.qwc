@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+<AppName>Name</AppName>
+<AppID>UniqueID</AppID>
+<AppURL>Https://appurl.com/endpoint</AppURL>
+<AppDescription>Connects with QuickBooks Desktop</AppDescription>
+<AppSupport> https://appurl.com/support</AppSupport>
+<UserName>username</UserName>
+<OwnerID>{madeup-uid}</OwnerID>
+<FileID>{madeup-uid}</FileID>
+<QBType>QBFS</QBType>
+<Scheduler>
+<RunEveryNMinutes>60</RunEveryNMinutes>
+</Scheduler>
+</QBWCXML>
