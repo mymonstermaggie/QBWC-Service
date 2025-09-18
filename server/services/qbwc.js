@@ -5,6 +5,26 @@ const QBWC_PASSWORD = process.env.QBWC_PASSWORD;
 // Store your queue of QBXML requests here
 const requestQueue = [];
 
+
+
+const customerName = 'John Doe'; // Replace with the customer name you want to query
+
+// Construct the QBXML request
+const qbxmlRequest = `
+<?xml version="1.0" encoding="utf-8"?>
+<?qbxml version="13.0"?>
+<QBXML>
+  <QBXMLMsgsRq onError="stopOnError">
+    <CustomerQueryRq requestID="1">
+    <TotalBalanceFilter> <!-- optional -->
+        <!-- Operator may have one of the following values: LessThan, LessThanEqual, Equal, GreaterThan, GreaterThanEqual -->
+        <Operator >GreaterThanEqual</Operator> <!-- required -->
+        <Amount >500.00</Amount> <!-- required -->
+    </TotalBalanceFilter>
+    </CustomerQueryRq>
+  </QBXMLMsgsRq>
+</QBXML>`.trim();
+
 // Define the SOAP service
 const qbwcService = {
     QBWebConnectorSvc: {
@@ -38,7 +58,7 @@ const qbwcService = {
           }
         },
         authenticate: function(args, callback) {
-          console.log('authenticate called with args:', args);
+          console.log('authenticate called');
           const username = args.strUserName;
           const password = args.strPassword;
   
@@ -52,7 +72,31 @@ const qbwcService = {
             console.log('Authentication failed for user:', username);
             callback({ authenticateResult: {string: ['nvu', '']} }); // 'nvu' indicates not valid user
           }
-        }
+        },
+        sendRequestXML: function(args, callback) {
+          console.log('sendRequestXML called');
+          callback({
+            sendRequestXMLResult: qbxmlRequest
+          });
+        },
+        receiveResponseXML: function(args, callback) {
+          console.log('receiveResponseXML called with args:', args);
+          callback({
+            receiveResponseXMLResult: 100
+          });
+        },
+        getLastError: function(args, callback) {
+          console.log('getLastError called with args:', args);
+          callback({
+            getLastErrorResult: 'No Error'
+          });
+        },
+        closeConnection: function(args, callback) {
+          console.log('closeConnection called with args:', args);
+          callback({
+            closeConnectionResult: 'OK'
+          });
+        },
       }
     }
   };
