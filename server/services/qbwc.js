@@ -2,28 +2,10 @@ require('dotenv').config();
 const QBWC_USERNAME = process.env.QBWC_USERNAME;
 const QBWC_PASSWORD = process.env.QBWC_PASSWORD;
 
+const collectionsRequest = require('../scripts/collections.js');
+
 // Store your queue of QBXML requests here
 const requestQueue = [];
-
-
-
-const customerName = 'John Doe'; // Replace with the customer name you want to query
-
-// Construct the QBXML request
-const qbxmlRequest = `
-<?xml version="1.0" encoding="utf-8"?>
-<?qbxml version="13.0"?>
-<QBXML>
-  <QBXMLMsgsRq onError="stopOnError">
-    <CustomerQueryRq requestID="1">
-    <TotalBalanceFilter> <!-- optional -->
-        <!-- Operator may have one of the following values: LessThan, LessThanEqual, Equal, GreaterThan, GreaterThanEqual -->
-        <Operator >GreaterThanEqual</Operator> <!-- required -->
-        <Amount >500.00</Amount> <!-- required -->
-    </TotalBalanceFilter>
-    </CustomerQueryRq>
-  </QBXMLMsgsRq>
-</QBXML>`.trim();
 
 // Define the SOAP service
 const qbwcService = {
@@ -76,7 +58,7 @@ const qbwcService = {
         sendRequestXML: function(args, callback) {
           console.log('sendRequestXML called');
           callback({
-            sendRequestXMLResult: qbxmlRequest
+            sendRequestXMLResult: collectionsRequest
           });
         },
         receiveResponseXML: function(args, callback) {
