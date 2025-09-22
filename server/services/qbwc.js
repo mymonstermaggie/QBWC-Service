@@ -1,10 +1,12 @@
 require('dotenv').config();
+const mongoose = require('mongoose');
+const xml2js = require('xml2js');
+
 const QBWC_USERNAME = process.env.QBWC_USERNAME;
 const QBWC_PASSWORD = process.env.QBWC_PASSWORD;
 
 const collectionsRequest = require('../scripts/collections.js');
-
-// Store your queue of QBXML requests here
+var QBRequest = require('../models/schemas/QBRequest.js');
 const requestQueue = [];
 
 // Define the SOAP service
@@ -55,17 +57,38 @@ const qbwcService = {
             callback({ authenticateResult: {string: ['nvu', '']} }); // 'nvu' indicates not valid user
           }
         },
-        sendRequestXML: function(args, callback) {
+        sendRequestXML: async function(args, callback) {
           console.log('sendRequestXML called');
-          callback({
-            sendRequestXMLResult: collectionsRequest
-          });
+
+          await QBRequest.find({ processed: false }).sort({ createdAt: 1 }).then(async (requests) => {
+            requestQueue.push(...requests);
+          })
+
+          console.log('Requests in queue:', requestQueue.length);
+          const nextJob = requestQueue.shift();
+
+          if (nextJob) {
+            console.log('Processing request:', nextJob._id);
+            callback({sendRequestXMLResult: collectionsRequest(nextJob._id.toString())});
+          }
+          else callback({
+            sendRequestXMLResult: ''
+          })
         },
         receiveResponseXML: function(args, callback) {
-          console.log('receiveResponseXML called with args:', args);
-          callback({
-            receiveResponseXMLResult: 100
-          });
+          console.log('receiveResponseXML');
+          const xmlResponse = args.response;
+
+          xml2js.parseString(xmlResponse, { explicitArray: false }, (err, result) => {
+            if (err) {
+                console.error('Error parsing XML:', err);
+                callback({ receiveResponseXMLResult: -1 }); // Return error code
+            } else {
+                console.log('Parsed XML:', result);
+                // Process the parsed XML data here
+                callback({ receiveResponseXMLResult: 100 }); // Return success code
+            }
+        });
         },
         getLastError: function(args, callback) {
           console.log('getLastError called with args:', args);
