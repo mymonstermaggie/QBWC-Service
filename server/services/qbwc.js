@@ -6,7 +6,11 @@ const QBWC_USERNAME = process.env.QBWC_USERNAME;
 const QBWC_PASSWORD = process.env.QBWC_PASSWORD;
 
 const collectionsRequest = require('../scripts/collections.js');
+
 var QBRequest = require('../models/schemas/QBRequest.js');
+var CollectionsReport = require('../models/Schemas/CollectionsReport.js');
+const { request } = require('http');
+
 const requestQueue = [];
 
 // Define the SOAP service
@@ -59,33 +63,88 @@ const qbwcService = {
         },
         sendRequestXML: async function(args, callback) {
           console.log('sendRequestXML called');
+          requestQueue.length = 0;
 
-          await QBRequest.find({ processed: false }).sort({ createdAt: 1 }).then(async (requests) => {
-            requestQueue.push(...requests);
-          })
+          let unprocessedRequests = await QBRequest.find({ processed: false })
+          unprocessedRequests.forEach(ticket => {requestQueue.push(ticket);});
 
           console.log('Requests in queue:', requestQueue.length);
           const nextJob = requestQueue.shift();
 
-          if (nextJob) {
-            console.log('Processing request:', nextJob._id);
+          if (nextJob && nextJob.processed === false) {
+            console.log('Processing request:', nextJob._id.toString(), 'Type:', nextJob.requestType);
             callback({sendRequestXMLResult: collectionsRequest(nextJob._id.toString())});
           }
           else callback({
             sendRequestXMLResult: ''
           })
         },
-        receiveResponseXML: function(args, callback) {
+        receiveResponseXML: async function(args, callback) {
           console.log('receiveResponseXML');
           const xmlResponse = args.response;
 
-          xml2js.parseString(xmlResponse, { explicitArray: false }, (err, result) => {
+          xml2js.parseString(xmlResponse, { explicitArray: false }, async (err, result) => {
             if (err) {
                 console.error('Error parsing XML:', err);
                 callback({ receiveResponseXMLResult: -1 }); // Return error code
             } else {
                 console.log('Parsed XML:', result);
+                
                 // Process the parsed XML data here
+                if (result && result.QBXML && result.QBXML.QBXMLMsgsRs) {
+                  const responseType = Object.keys(result.QBXML.QBXMLMsgsRs)[0];
+                  const responseData = result.QBXML.QBXMLMsgsRs[responseType];
+                  const requestID = responseData.$.requestID;
+
+                  // Handle different response types and statuses
+                  if (responseType === 'CustomerQueryRs' && responseData.$.statusCode === '0') {
+                    let requestTicket = await QBRequest.findOne({_id: requestID})
+                    if(requestTicket.requestType === 'Collections') {
+                      console.log('Processing Collections response for requestID:', requestID);
+                      const reportEntries = responseData.CustomerRet.map(customer => ({
+                        requestID: new mongoose.Types.ObjectId(requestID),
+                        listID: customer.ListID || '',
+                        rcomAccountNumber: customer.AccountNumber || '',
+                        fullName: customer.FullName || '',
+                        balance: parseFloat(customer.TotalBalance) || 0,
+                        daysOverdue: 0,
+                        email: customer.Email || '',
+                        phone: customer.Phone || '',
+                        officerName: '',
+                        officerEmail: '',
+                      }));
+                      CollectionsReport.insertMany(reportEntries)
+                        .then(() => {
+                          console.log('Inserted collections report entries for request:', requestID);
+                        })
+                        .catch((insertErr) => {
+                          console.error('Error inserting collections report entries:', insertErr);
+                        });
+                    }
+                    else {
+                      console.warn('Request type is not Collections for requestID:', requestID);
+                    }
+                  } else {
+                    console.warn('Unexpected response type or error status:', responseType, responseData.$.statusCode);
+                  }
+                  
+                  
+                  // Mark the request as processed
+                  QBRequest.findOneAndUpdate(
+                    { _id: new mongoose.Types.ObjectId(responseData.$.requestID)},
+                    { processed: true },
+                  ).then((updatedRequest) => {
+                    if (updatedRequest) {
+                      console.log('Marked request as processed:', updatedRequest._id);
+                    } else {
+                      console.warn('No unprocessed request found to mark as processed.');
+                    }
+                  }).catch((updateErr) => {
+                    console.error('Error updating request status:', updateErr);
+                  });
+                } else {
+                  console.warn('Invalid response structure:', result);
+                }
                 callback({ receiveResponseXMLResult: 100 }); // Return success code
             }
         });
