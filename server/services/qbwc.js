@@ -66,7 +66,7 @@ const qbwcService = {
         getLastError: function(args, callback) {
           console.log('getLastError called with args:', args);
           callback({
-            getLastErrorResult: 'No Error'
+            getLastErrorResult: ''
           });
         },
         closeConnection: function(args, callback) {

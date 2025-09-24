@@ -2,7 +2,6 @@ const QBRequest = require('../models/schemas/QBRequest.js');
 const collectionsRequest = require('../scripts/collections.js');
 
 const sendRequestXML = async function(args, callback) {
-  console.log('sendRequestXML called');
   const requestQueue = [];
   requestQueue.length = 0;
 
