@@ -6,6 +6,7 @@ function createQbxmlRequest(requestID) {
 <QBXML>
   <QBXMLMsgsRq onError="stopOnError">
     <CustomerQueryRq requestID="${requestID}">
+      <ActiveStatus>ActiveOnly</ActiveStatus>
       <TotalBalanceFilter> 
           <Operator>GreaterThanEqual</Operator> 
           <Amount>1000.00</Amount>

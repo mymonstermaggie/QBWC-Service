@@ -4,7 +4,6 @@ const QBRequest = require('../models/Schemas/QBRequest'); // Adjust the path as 
 const CollectionsReport = require('../models/Schemas/CollectionsReport'); // Adjust the path as needed
 
 async function handleResponseXML(args, callback) {
-  console.log('receiveResponseXML');
   const xmlResponse = args.response;
 
   xml2js.parseString(xmlResponse, { explicitArray: false }, async (err, result) => {
@@ -12,8 +11,6 @@ async function handleResponseXML(args, callback) {
       console.error('Error parsing XML:', err);
       callback({ receiveResponseXMLResult: -1 }); // Return error code
     } else {
-      console.log('Parsed XML:', result);
-
       // Process the parsed XML data here
       if (result && result.QBXML && result.QBXML.QBXMLMsgsRs) {
         const responseType = Object.keys(result.QBXML.QBXMLMsgsRs)[0];
@@ -25,6 +22,7 @@ async function handleResponseXML(args, callback) {
           let requestTicket = await QBRequest.findOne({ _id: requestID });
           if (requestTicket.requestType === 'Collections') {
             console.log('Processing Collections response for requestID:', requestID);
+            console.log('Customer Count', responseData.CustomerRet.length || 0);
             const reportEntries = responseData.CustomerRet.map(customer => {
               const customFields = Array.isArray(customer.DataExtRet)
               ? customer.DataExtRet.reduce((fields, ext) => {
@@ -39,7 +37,7 @@ async function handleResponseXML(args, callback) {
               fullName: customer.FullName || '',
               balance: parseFloat(customer.TotalBalance) || 0,
               daysOverdue: 0,
-              billingType: customer.CustomerTypeRefFullName || '',
+              billingType: customer.CustomerTypeRef.FullName || '',
               email: customer.Email || '',
               phone: customer.Phone || '',
               officerName: '',
@@ -64,7 +62,7 @@ async function handleResponseXML(args, callback) {
             { _id: requestID},
             {processed: true },
             { new: true }
-        ).then((response) => {console.log(response)}).catch((updateErr) => {
+        ).then((response) => {console.log("Added to reports table")}).catch((updateErr) => {
           console.error('Error updating request status:', updateErr);
         });
       }
