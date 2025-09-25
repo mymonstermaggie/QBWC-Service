@@ -11,6 +11,7 @@ const CollectionsReportSchema = new mongoose.Schema({
     fullName: {type: String, default: ''},
     balance: {type: Number, default: 0},
     daysOverdue: {type: Number, default: 0},
+    billingType: {type: String, default: ''},
     email: {type: String, default: ''},
     phone: {type: String, default: ''},
     officerName: {type: String, default: ''},

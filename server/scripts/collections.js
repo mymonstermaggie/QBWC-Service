@@ -6,14 +6,11 @@ function createQbxmlRequest(requestID) {
 <QBXML>
   <QBXMLMsgsRq onError="stopOnError">
     <CustomerQueryRq requestID="${requestID}">
-    <TotalBalanceFilter> <!-- optional -->
-        <!-- Operator may have one of the following values: LessThan, LessThanEqual, Equal, GreaterThan, GreaterThanEqual -->
-        <Operator>GreaterThanEqual</Operator> <!-- required -->
-        <Amount>4000.00</Amount> <!-- required -->
-    </TotalBalanceFilter>
-    <IncludeRetElement>ListID</IncludeRetElement> <!-- optional, may repeat -->
-    <IncludeRetElement>FullName</IncludeRetElement> <!-- optional, may repeat -->
-    <IncludeRetElement>TotalBalance</IncludeRetElement> <!-- optional, may repeat -->
+      <TotalBalanceFilter> 
+          <Operator>GreaterThanEqual</Operator> 
+          <Amount>1000.00</Amount>
+      </TotalBalanceFilter>
+      <OwnerID>0</OwnerID>
     </CustomerQueryRq>
   </QBXMLMsgsRq>
 </QBXML>`.trim();

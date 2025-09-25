@@ -25,18 +25,26 @@ async function handleResponseXML(args, callback) {
           let requestTicket = await QBRequest.findOne({ _id: requestID });
           if (requestTicket.requestType === 'Collections') {
             console.log('Processing Collections response for requestID:', requestID);
-            const reportEntries = responseData.CustomerRet.map(customer => ({
+            const reportEntries = responseData.CustomerRet.map(customer => {
+              const customFields = Array.isArray(customer.DataExtRet)
+              ? customer.DataExtRet.reduce((fields, ext) => {
+                  fields[ext.DataExtName] = ext.DataExtValue;
+                  return fields;
+                }, {})
+              : {}
+              return {
               requestID: new mongoose.Types.ObjectId(requestID),
               listID: customer.ListID || '',
-              rcomAccountNumber: customer.AccountNumber || '',
+              rcomAccountNumber: customFields['Account Number'] || '',
               fullName: customer.FullName || '',
               balance: parseFloat(customer.TotalBalance) || 0,
               daysOverdue: 0,
+              billingType: customer.CustomerTypeRefFullName || '',
               email: customer.Email || '',
               phone: customer.Phone || '',
               officerName: '',
               officerEmail: '',
-            }));
+            }});
             CollectionsReport.insertMany(reportEntries)
               .then(() => {
                 console.log('Inserted collections report entries for request:', requestID);
