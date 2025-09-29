@@ -50,12 +50,8 @@ async function handleResponseXML(args, callback) {
               processed: false,
             }});
             CollectionsReport.insertMany(reportEntries)
-              .then(() => {
-                console.log('Inserted collections report entries for request:', requestID);
-              })
-              .catch((insertErr) => {
-                console.error('Error inserting collections report entries:', insertErr);
-              });
+              .then(() => {console.log('Inserted collections report entries for request:', requestID)})
+              .catch((insertErr) => {console.error('Error inserting collections report entries:', insertErr)});
             
             // Mark the request as processed
             QBRequest.findOneAndUpdate(
@@ -68,9 +64,7 @@ async function handleResponseXML(args, callback) {
             console.warn('Request type is not Collections for requestID:', requestID);
           }
         } 
-        else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '0') {
-          console.log('Processing Payment response for requestID:', responseData.$.requestID);
-          
+        else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '0') {          
           const payments = Array.isArray(responseData.ReceivePaymentRet) ? responseData.ReceivePaymentRet.sort((a, b) => new Date(b.TxnDate) - new Date(a.TxnDate)) : null;
           const mostRecent = payments ? payments[0] : responseData.ReceivePaymentRet;
 
@@ -80,20 +74,21 @@ async function handleResponseXML(args, callback) {
             {
               processed: true,
               lastPaymentDate: mostRecent ? new Date(mostRecent.TxnDate) : null,
-              lastPaymentAmount: mostRecent ? parseFloat(mostRecent.TotalAmount) : 0,},
+              lastPaymentAmount: mostRecent ? parseFloat(mostRecent.TotalAmount) : 0
+            },
             { new: true })
           .then((response) => {console.log("Added to reports table")})
           .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
         }
         else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '1') {
-          console.log('Processing Payment response for requestID:', responseData);
           // Mark the request as processed
           CollectionsReport.findOneAndUpdate(
             { listID: requestID},
             {
               processed: true,
               lastPaymentDate: null,
-              lastPaymentAmount: null},
+              lastPaymentAmount: null
+            },
             { new: true })
           .then((response) => {console.log("Added to reports table")})
           .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
@@ -101,8 +96,6 @@ async function handleResponseXML(args, callback) {
         else {
           console.warn('Unexpected response type or error status:', responseType, responseData);
         }
-
-
       }
       else {
         console.warn('Invalid response structure:', args);
