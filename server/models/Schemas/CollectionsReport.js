@@ -16,6 +16,9 @@ const CollectionsReportSchema = new mongoose.Schema({
     phone: {type: String, default: ''},
     officerName: {type: String, default: ''},
     officerEmail: {type: String, default: ''},
+    processed: {type: Boolean, default: false},
+    lastPaymentDate: {type: Date, default: null},
+    lastPaymentAmount: {type: Number, default: 0},
 });
 
 module.exports = crmMongo.model('collectionsReport', CollectionsReportSchema, 'collectionsReports');

@@ -4,14 +4,12 @@ function createQbxmlRequest(requestID) {
 <?qbxml version="13.0"?>
 <QBXML>
   <QBXMLMsgsRq onError="stopOnError">
-    <CustomerQueryRq requestID="${requestID}">
-      <ActiveStatus>ActiveOnly</ActiveStatus>
-      <TotalBalanceFilter> 
-          <Operator>GreaterThanEqual</Operator> 
-          <Amount>1000.00</Amount>
-      </TotalBalanceFilter>
+    <ReceivePaymentQueryRq requestID="${requestID}">
+      <EntityFilter>
+          <ListID>${requestID}</ListID>
+      </EntityFilter>
       <OwnerID>0</OwnerID>
-    </CustomerQueryRq>
+    </ReceivePaymentQueryRq>
   </QBXMLMsgsRq>
 </QBXML>`.trim();
 }
