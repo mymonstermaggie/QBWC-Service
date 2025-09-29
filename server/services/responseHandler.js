@@ -64,21 +64,64 @@ async function handleResponseXML(args, callback) {
             console.warn('Request type is not Collections for requestID:', requestID);
           }
         } 
-        else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '0') {          
-          const payments = Array.isArray(responseData.ReceivePaymentRet) ? responseData.ReceivePaymentRet.sort((a, b) => new Date(b.TxnDate) - new Date(a.TxnDate)) : null;
-          const mostRecent = payments ? payments[0] : responseData.ReceivePaymentRet;
+        else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '0') {  
+          if(Array.isArray(responseData.ReceivePaymentRet)){
+            const payments = responseData.ReceivePaymentRet.sort((a, b) => new Date(b.TxnDate) - new Date(a.TxnDate))
+            const mostRecent = payments[0]
+            const now = new Date();
+            let last15th = new Date(now.getFullYear(), now.getMonth(), 15);
 
-          // Mark the request as processed
-          CollectionsReport.findOneAndUpdate(
-            { listID: requestID},
-            {
-              processed: true,
-              lastPaymentDate: mostRecent ? new Date(mostRecent.TxnDate) : null,
-              lastPaymentAmount: mostRecent ? parseFloat(mostRecent.TotalAmount) : 0
-            },
-            { new: true })
-          .then((response) => {console.log("Added to reports table")})
-          .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
+            // If today is before the 15th, use the 15th of the previous month
+            if (now.getDate() < 15) {
+              last15th = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+            }
+          
+            const recentPayments = payments.filter(payment => {
+              const paymentDate = new Date(payment.TxnDate);
+              return paymentDate >= last15th;
+            });
+
+            const totalRecentAmount = recentPayments.reduce((sum, payment) => sum + parseFloat(payment.TotalAmount), 0);
+
+            // Mark the request as processed
+            CollectionsReport.findOneAndUpdate(
+              { listID: requestID},
+              {
+                processed: true,
+                lastPaymentDate: new Date(mostRecent.TxnDate),
+                lastPaymentAmount: parseFloat(mostRecent.TotalAmount),
+                totalRecentAmount: totalRecentAmount
+              },
+              { new: true })
+            .then((response) => {console.log("Added to reports table")})
+            .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
+          }
+          else{
+            const mostRecent = responseData.ReceivePaymentRet;
+            const now = new Date();
+            let last15th = new Date(now.getFullYear(), now.getMonth(), 15);
+
+            // If today is before the 15th, use the 15th of the previous month
+            if (now.getDate() < 15) {
+              last15th = new Date(now.getFullYear(), now.getMonth() - 1, 15);
+            }
+          
+            const paymentDate = new Date(mostRecent.TxnDate);
+            const totalRecentAmount = paymentDate >= last15th ? parseFloat(mostRecent.TotalAmount) : 0;
+
+            // Mark the request as processed
+            CollectionsReport.findOneAndUpdate(
+              { listID: requestID},
+              {
+                processed: true,
+                lastPaymentDate: new Date(mostRecent.TxnDate),
+                lastPaymentAmount: parseFloat(mostRecent.TotalAmount),
+                totalRecentAmount: totalRecentAmount
+              },
+              { new: true })
+            .then((response) => {console.log("Added to reports table")})
+            .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
+          }
         }
         else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '1') {
           // Mark the request as processed
