@@ -27,8 +27,6 @@ async function handleResponseXML(args, callback) {
         let requestTicket = await QBRequest.findOne({ _id: requestID });
         if (requestTicket.requestType === 'Collections') {
           console.log('Processing Collections response for requestID:', requestID);
-          console.log('Customer Count', responseData.CustomerRet.length || 0);
-
             const reportEntries = responseData.CustomerRet
             .filter(customer => customer.ParentRef === undefined) // Exclude sub-customers
             .map(customer => {
@@ -52,6 +50,9 @@ async function handleResponseXML(args, callback) {
               officerEmail: '',
               processed: false,
             }});
+
+            console.log('Customer Count', reportEntries.length || 0);
+
             CollectionsReport.insertMany(reportEntries)
               .then(() => {console.log('Inserted collections report entries for request:', requestID)})
               .catch((insertErr) => {console.error('Error inserting collections report entries:', insertErr)});
