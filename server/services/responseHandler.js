@@ -24,11 +24,14 @@ async function handleResponseXML(args, callback) {
 
         // Handle different response types and statuses
         if (responseType === 'CustomerQueryRs' && responseData.$.statusCode === '0') {
-          let requestTicket = await QBRequest.findOne({ _id: requestID });
-          if (requestTicket.requestType === 'Collections') {
-            console.log('Processing Collections response for requestID:', requestID);
-            console.log('Customer Count', responseData.CustomerRet.length || 0);
-            const reportEntries = responseData.CustomerRet.map(customer => {
+        let requestTicket = await QBRequest.findOne({ _id: requestID });
+        if (requestTicket.requestType === 'Collections') {
+          console.log('Processing Collections response for requestID:', requestID);
+          console.log('Customer Count', responseData.CustomerRet.length || 0);
+
+            const reportEntries = responseData.CustomerRet
+            .filter(customer => customer.ParentRef === undefined) // Exclude sub-customers
+            .map(customer => {
               const customFields = Array.isArray(customer.DataExtRet)
               ? customer.DataExtRet.reduce((fields, ext) => {
                   fields[ext.DataExtName] = ext.DataExtValue;
@@ -60,10 +63,11 @@ async function handleResponseXML(args, callback) {
                 { new: true })
               .then((response) => {console.log("Added to reports table")})
               .catch((updateErr) => {console.error('Error updating request status:', updateErr)});
-          } else {
+          } 
+        else {
             console.warn('Request type is not Collections for requestID:', requestID);
           }
-        } 
+        }
         else if (responseType === 'ReceivePaymentQueryRs' && responseData.$.statusCode === '0') {  
           if(Array.isArray(responseData.ReceivePaymentRet)){
             const payments = responseData.ReceivePaymentRet.sort((a, b) => new Date(b.TxnDate) - new Date(a.TxnDate))
