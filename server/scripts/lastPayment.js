@@ -1,10 +1,10 @@
-function createQbxmlRequest(requestID) {
+function createQbxmlRequest(requestID, requestType) {
   return `
 <?xml version="1.0" encoding="utf-8"?>
 <?qbxml version="13.0"?>
 <QBXML>
   <QBXMLMsgsRq onError="stopOnError">
-    <ReceivePaymentQueryRq requestID="${requestID}">
+    <ReceivePaymentQueryRq requestID="${requestType}">
       <EntityFilter>
           <ListID>${requestID}</ListID>
       </EntityFilter>

@@ -10,21 +10,20 @@ const sendRequestXML = async function(args, callback) {
   unprocessedRequests.forEach(ticket => {requestQueue.push(ticket);});
 
   let lastPaymentRequests = await CollectionsReport.find({ processed: false })
-  lastPaymentRequests.forEach(ticket => {requestQueue.push({_id: ticket.listID, processed: ticket.processed})});
+  lastPaymentRequests.forEach(ticket => {requestQueue.push({_id: ticket.listID, processed: ticket.processed, requestType: 'CollectionsPayments'});});
 
   console.log('Requests in queue:', requestQueue.length);
   const nextJob = requestQueue.shift();
 
   if (nextJob && nextJob.processed === false) {
+    console.log('Processing request:', nextJob._id.toString(), 'Type:', nextJob.requestType);
     if(nextJob.requestType == 'Collections') {
-      console.log('Processing request:', nextJob._id.toString(), 'Type:', nextJob.requestType);
       const collectionsRequest = require('../scripts/collections.js');
-      callback({sendRequestXMLResult: collectionsRequest(nextJob._id.toString())});
+      callback({sendRequestXMLResult: collectionsRequest(nextJob.requestType+"."+nextJob._id.toString())});
     }
-    else {
-      console.log('Processing last payment request for ListID:', nextJob._id);
+    else if(nextJob && nextJob.requestType == 'CollectionsPayments') {
       const lastPaymentRequest = require('../scripts/lastPayment.js');
-      callback({sendRequestXMLResult: lastPaymentRequest(nextJob._id)});
+      callback({sendRequestXMLResult: lastPaymentRequest(nextJob._id, nextJob.requestType+"."+nextJob._id)});
     }
   }
   else callback({
