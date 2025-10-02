@@ -21,3 +21,7 @@ $RECYCLE.BIN/
 .Trashes
 
 package-lock.json
+
+#Scout
+server/models/schemas/ScoutClient.js
+server/models/schemas/Devices.js

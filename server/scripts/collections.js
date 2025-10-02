@@ -8,7 +8,7 @@ function createQbxmlRequest(requestID) {
       <ActiveStatus>ActiveOnly</ActiveStatus>
       <TotalBalanceFilter> 
           <Operator>GreaterThanEqual</Operator> 
-          <Amount>500.00</Amount>
+          <Amount>1500.00</Amount>
       </TotalBalanceFilter>
       <OwnerID>0</OwnerID>
     </CustomerQueryRq>

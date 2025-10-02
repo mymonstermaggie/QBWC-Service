@@ -20,6 +20,7 @@ const CollectionsReportSchema = new mongoose.Schema({
     lastPaymentDate: {type: Date, default: null},
     lastPaymentAmount: {type: Number, default: 0},
     totalRecentAmount: {type: Number, default: 0},
+    deviceCount: {type: Number, default: 0}
 });
 
 module.exports = crmMongo.model('collectionsReport', CollectionsReportSchema, 'collectionsReports');
