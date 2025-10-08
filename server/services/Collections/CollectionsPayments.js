@@ -101,11 +101,19 @@ async function collectionsPayments(responseData, requestID) {
             let lastPaymentAmount = thisClient.lastPaymentAmount || 0;
             let totalRecentAmount = thisClient.totalRecentAmount || 0;
 
-            console.log(billingType)
 
-            if (!billingType || billingType.includes('Pending')){
+            const agencyRegex = new RegExp("agency", 'i'); // 'i' flag for case-insensitive
+            const pendingRegex = new RegExp("pending", 'i'); // 'i' flag for case-insensitive
+            const closedRegex = new RegExp("closed", 'i'); // 'i' flag for case-insensitive
+
+
+            if (billingType && agencyRegex.test(billingType)){
+                noticeType = null
+            }
+            else if (!billingType || pendingRegex.test(billingType)){
                 noticeType = 0;
-            } else if(billingType && billingType.includes('Closed')){
+            } 
+            else if(billingType && closedRegex.test(billingType)){
                 noticeType = 1;
             } 
             else if (balance >= 500){
